@@ -25,6 +25,10 @@
       "rev": "221ce6b2d999187044529f49da6554a92f740a96",
       "src": "https://github.com/nvim-lualine/lualine.nvim"
     },
+    "luasnip-latex-snippets.nvim": {
+      "rev": "84d37a68b5858bafe75573f8ea6898ba095fef45",
+      "src": "https://github.com/iurimateus/luasnip-latex-snippets.nvim"
+    },
     "mason.nvim": {
       "rev": "2a6940af80375532e5e9e7c1f2fc6319a1b7a69d",
       "src": "https://github.com/mason-org/mason.nvim"

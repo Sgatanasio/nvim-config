@@ -11,7 +11,7 @@ vim.pack.add({
 	{
 		src = 'https://github.com/nvim-treesitter/nvim-treesitter',
 		branch = 'main',
-		build = 'TSUpdate',
+		build = ':TSUpdate',
 	},
 	-- LSPs
 	"https://github.com/neovim/nvim-lspconfig",
@@ -21,7 +21,8 @@ vim.pack.add({
 		src = "https://github.com/saghen/blink.cmp",
 		version = vim.version.range("1.*"),
 	},
-	"https://github.com/L3MON4D3/LuaSnip"
+	"https://github.com/L3MON4D3/LuaSnip",
+	"https://github.com/iurimateus/luasnip-latex-snippets.nvim",
 })
 
 
@@ -135,6 +136,7 @@ require("mini.trailspace").setup({}) -- RED MARKS IN TRAILING SPACE
 require("mini.bufremove").setup({})
 require("mini.notify").setup({})
 require("mini.icons").setup({})
+require("mini.hipatterns").setup({})
 
 -- GITSIGNS CONFIG AKA THE LITTLE COLORED BAR TO THE LEFT
 
@@ -170,6 +172,7 @@ local setup_treesitter = function()
 		"javascript",
 		"json",
 		"lua",
+		"latex",
 		"markdown",
 		"python",
 		"typescript",
@@ -244,6 +247,49 @@ do
 end
 
 
+-- LATEX SNIPPETS
+
+require("luasnip").config.setup({
+	enable_autosnippets = true,
+})
+
+require("luasnip-latex-snippets").setup({
+	use_treesitter = true,
+	allow_on_markdown = false,
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = "tex",
+	callback = function(args)
+		local ls = require("luasnip")
+		local tab = vim.api.nvim_replace_termcodes("<Tab>", true, false, true)
+		local s_tab = vim.api.nvim_replace_termcodes("<S-Tab>", true, false, true)
+
+		vim.keymap.set("i", "<Tab>", function()
+			if ls.expand_or_jumpable() then
+				ls.expand_or_jump()
+			else
+				vim.api.nvim_feedkeys(tab, "n", false)
+			end
+		end, { buffer = args.buf, silent = true })
+
+		vim.keymap.set("s", "<Tab>", function()
+			if ls.jumpable(1) then
+				ls.jump(1)
+			end
+		end, { buffer = args.buf, silent = true })
+
+		vim.keymap.set({ "i", "s" }, "<S-Tab>", function()
+			if ls.jumpable(-1) then
+				ls.jump(-1)
+			else
+				vim.api.nvim_feedkeys(s_tab, "n", false)
+			end
+		end, { buffer = args.buf, silent = true })
+	end,
+})
+
+
 require("blink.cmp").setup({
 	keymap = {
 		preset = "none",
@@ -262,7 +308,11 @@ require("blink.cmp").setup({
 			end,
 		},
 	},
-	sources = { default = { "lsp", "path", "buffer", "snippets" } },
+	sources = {
+		default = { "lsp", "path", "buffer", "snippets" },
+		-- LaTeX snippets come from LuaSnip, not from completion suggestions.
+		per_filetype = { tex = { "lsp", "path", "buffer" } },
+	},
 	snippets = {
 		expand = function(snippet)
 			require("luasnip").lsp_expand(snippet)
@@ -316,6 +366,8 @@ do
 	local cpplint = require("efmls-configs.linters.cpplint")
 	local clangfmt = require("efmls-configs.formatters.clang_format")
 
+	local chktex = require("efmls-configs.linters.chktex")
+
 	vim.lsp.config("efm", {
 		filetypes = {
 			"c",
@@ -335,6 +387,7 @@ do
 			"typescriptreact",
 			"vue",
 			"svelte",
+			"tex",
 		},
 		init_options = { documentFormatting = true },
 		settings = {
@@ -355,6 +408,7 @@ do
 				typescriptreact = { eslint_d, prettier_d },
 				vue = { eslint_d, prettier_d },
 				svelte = { eslint_d, prettier_d },
+				tex = { chktex },
 			},
 		},
 	})
